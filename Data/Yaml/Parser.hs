@@ -15,7 +15,9 @@ import Data.ByteString (ByteString)
 import Data.Conduit
 import Data.Conduit.Lift (runWriterC)
 import qualified Data.Map as Map
-#if !MIN_VERSION_base(4,8,0)
+#if MIN_VERSION_base(4,9,0)
+import Data.Semigroup
+#elif !MIN_VERSION_base(4,8,0)
 import Data.Monoid (Monoid (..))
 #endif
 import Data.Text (Text, pack, unpack)
@@ -36,9 +38,13 @@ instance Applicative YamlParser where
 instance Alternative YamlParser where
     empty = fail "empty"
     (<|>) = mplus
+instance Semigroup (YamlParser a) where
+    (<>) = mplus
 instance Monoid (YamlParser a) where
     mempty = fail "mempty"
+#if !(MIN_VERSION_base(4,11,0))
     mappend = mplus
+#endif
 instance Monad YamlParser where
     return = pure
     YamlParser f >>= g = YamlParser $ \am ->
